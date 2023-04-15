@@ -1,5 +1,5 @@
 /* LzFind.c -- Match finder for LZ algorithms
-2021-07-12 : Igor Pavlov : Public domain */
+2021-11-29 : Igor Pavlov : Public domain */
 
 #include "Precomp.h"
 
@@ -600,7 +600,9 @@ static
 #ifdef ATTRIB_SSE41
 ATTRIB_SSE41
 #endif
-void LzFind_SaturSub_128(UInt32 subValue, CLzRef *items, const CLzRef *lim)
+void
+MY_FAST_CALL
+LzFind_SaturSub_128(UInt32 subValue, CLzRef *items, const CLzRef *lim)
 {
   v128 sub2 =
     #ifdef MY_CPU_ARM_OR_ARM64
@@ -623,13 +625,6 @@ void LzFind_SaturSub_128(UInt32 subValue, CLzRef *items, const CLzRef *lim)
 
 #ifdef USE_AVX2
 
-// HACK for clang-cl!!!
-#ifndef __AVX2__
-#define __AVX__ 1
-#define __AVX2__ 1
-#define AVX2_HACK 1
-#endif
-
 #include <immintrin.h> // avx
 
 #define SASUB_256(i) *(__m256i *)(void *)(items + (i) * 8) = _mm256_sub_epi32(_mm256_max_epu32(*(const __m256i *)(const void *)(items + (i) * 8), sub2), sub2); // AVX2
@@ -639,7 +634,9 @@ static
 #ifdef ATTRIB_AVX2
 ATTRIB_AVX2
 #endif
-void LzFind_SaturSub_256(UInt32 subValue, CLzRef *items, const CLzRef *lim)
+void
+MY_FAST_CALL
+LzFind_SaturSub_256(UInt32 subValue, CLzRef *items, const CLzRef *lim)
 {
   __m256i sub2 = _mm256_set_epi32(
       (Int32)subValue, (Int32)subValue, (Int32)subValue, (Int32)subValue,
@@ -652,13 +649,6 @@ void LzFind_SaturSub_256(UInt32 subValue, CLzRef *items, const CLzRef *lim)
   }
   while (items != lim);
 }
-
-#ifdef AVX2_HACK
-#undef __AVX2__
-#undef __AVX__
-#undef AVX2_HACK
-#endif
-
 #endif // USE_AVX2
 
 #ifndef FORCE_SATUR_SUB_128
@@ -683,7 +673,10 @@ static LZFIND_SATUR_SUB_CODE_FUNC g_LzFind_SaturSub;
 #define DEFAULT_SaturSub LzFind_SaturSub_32
 
 MY_NO_INLINE
-static void LzFind_SaturSub_32(UInt32 subValue, CLzRef *items, const CLzRef *lim)
+static
+void
+MY_FAST_CALL
+LzFind_SaturSub_32(UInt32 subValue, CLzRef *items, const CLzRef *lim)
 {
   do
   {
@@ -1606,7 +1599,7 @@ void LzFindPrepare()
   {
     if (CPU_IsSupported_NEON())
     {
-      #pragma message ("=== LzFind NEON")
+      // #pragma message ("=== LzFind NEON")
       _PRF(printf("\n=== LzFind NEON\n"));
       f = LzFind_SaturSub_128;
     }
@@ -1615,14 +1608,14 @@ void LzFindPrepare()
   #else // MY_CPU_ARM_OR_ARM64
   if (CPU_IsSupported_SSE41())
   {
-    #pragma message ("=== LzFind SSE41")
+    // #pragma message ("=== LzFind SSE41")
     _PRF(printf("\n=== LzFind SSE41\n"));
     f = LzFind_SaturSub_128;
 
     #ifdef USE_AVX2
     if (CPU_IsSupported_AVX2())
     {
-      #pragma message ("=== LzFind AVX2")
+      // #pragma message ("=== LzFind AVX2")
       _PRF(printf("\n=== LzFind AVX2\n"));
       f = LzFind_SaturSub_256;
     }

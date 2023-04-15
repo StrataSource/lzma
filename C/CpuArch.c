@@ -275,7 +275,7 @@ BoolInt CPU_IsSupported_SHA()
 // #include <stdio.h>
 
 #ifdef _WIN32
-#include "winlite.h"
+#include <Windows.h>
 #endif
 
 BoolInt CPU_IsSupported_AVX2()
